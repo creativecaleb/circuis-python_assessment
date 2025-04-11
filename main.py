@@ -23,18 +23,6 @@ class Window():
         # Avaliable seats
         self.update_day()
 
-        """
-            # Removed because the number of seats to select is limited by the seat selector GUI
-        # Seat selection
-        canvas.create_text(8, 250, text='Number of seats to buy', font=('Arial  20'), anchor=W)
-        # Seat number input
-        validation = root.register(self.only_numbers)
-        self.seat_input = Entry(root, validate = 'key', validatecommand = (validation, '%S'))
-        self.seat_input.place(x=10, y=270, width=100, height=30)
-        # Button to confirm seat number
-        self.seat_button = Button(root, text='Select', font='Arial 15', command=lambda: self.confirm_seat_number())
-        self.seat_button.place(x=120, y=270, width=100, height=30)
-        """
         # Button to confirm seat selection
         self.confirm_button = Button(root, text='Sell Selected Seats', font='Arial 20', command=lambda: self.confirm_seat_selection())
         self.confirm_button.place(x=10, y=190, width=270, height=40)
