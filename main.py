@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter.ttk import Combobox
+from PIL import ImageGrab
 
 class Window():
     def __init__(self, root, data):
@@ -7,11 +8,9 @@ class Window():
         self.data = data
         
         # Creates the main 'canvas' or background window for the rest of the GUI elements to go on
-        canvas = Canvas(root, width=1300, height=700, bg='grey')
+        canvas = Canvas(root, width=1300, height=750, bg='grey')
         canvas.grid()
         self.canvas = canvas
-
-        # Data and inputs
         
         # Time selection
         canvas.create_text(10, 20, text='Select a time', font=('Arial  20'), anchor=W)
@@ -24,9 +23,6 @@ class Window():
         # Avaliable seats
         self.update_day()
 
-        # Ticket Cost
-        canvas.create_text(10, 160, text='Ticket cost:', font=('Arial  20'), anchor=W)
-
         """
             # Removed because the number of seats to select is limited by the seat selector GUI
         # Seat selection
@@ -38,21 +34,21 @@ class Window():
         # Button to confirm seat number
         self.seat_button = Button(root, text='Select', font='Arial 15', command=lambda: self.confirm_seat_number())
         self.seat_button.place(x=120, y=270, width=100, height=30)
-        # Button to confirm seat selection
-        self.confirm_button = Button(root, text='Confirm Selection', font='Arial 15', command=lambda: self.confirm_seat_selection())
-        self.confirm_button.place(x=10, y=310, width=210, height=30)
         """
-        
-        # Seats sold data display
-        canvas.create_text(10, 600, text=f'Tickets sold: {self.data.tickets_sold}', font=('Arial  18'), anchor=W)
-        canvas.create_text(10, 630, text=f'Value of tickets sold: {self.data.value_tickets_sold}', font=('Arial  18'), anchor=W)
+        # Button to confirm seat selection
+        self.confirm_button = Button(root, text='Sell Selected Seats', font='Arial 20', command=lambda: self.confirm_seat_selection())
+        self.confirm_button.place(x=10, y=190, width=270, height=40)
+
+        # Button to refund seats
+        self.confirm_button = Button(root, text='Refund Seats', font='Arial 20', command=lambda: self.refund_seats(), bg='white')
+        self.confirm_button.place(x=10, y=240, width=270, height=40)
 
         # Day reset button
         self.reset_button = Button(root, text='Reset Day', font='Arial 20', command=lambda: self.data.reset_day(), fg='red')
-        self.reset_button.place(x=10, y=650, width=280, height=40)
+        self.reset_button.place(x=10, y=700, width=280, height=40)
 
         # Line to separate stage and seats from data and inputs
-        canvas.create_rectangle(300, 0, 300, 700, width=3)
+        canvas.create_rectangle(300, 0, 300, 750, width=3)
 
         # Stage Rectangle
         canvas.create_rectangle(500, 0, 1100, 70, width=2)
@@ -60,6 +56,7 @@ class Window():
         canvas.create_text(800, 35, text='Stage', font=('Arial  45'))
 
         self.create_seats()
+        canvas.bind("<Button-1>", self.clicked)
     
 
     # Function to only allow numbers in the seat input box
@@ -69,10 +66,31 @@ class Window():
     def update_day(self):
         time = self.dropdown.get()
         cost = self.data.costs.get(time, 0)
+        self.data.seats_selected = []
 
-        # Update available seats
+        # Available seats text
+        self.canvas.create_rectangle(8, 50, 290, 70, fill='grey', outline='grey')
         self.canvas.create_text(10, 60, text='Available seats:', font=('Arial  20'), anchor=W)
-    	
+
+        # Update cost text
+        self.canvas.create_rectangle(8, 148, 290, 173, fill='grey', outline='grey')
+        self.canvas.create_text(10, 160, text=f'Ticket cost: ${cost}', font=('Arial  20'), anchor=W)
+
+        # Seats sold data display
+        self.canvas.create_rectangle(8, 638, 290, 690, fill='grey', outline='grey')
+        self.canvas.create_text(10, 650, text=f'Tickets sold: {self.data.tickets_sold}', font=('Arial  17'), anchor=W)
+        self.canvas.create_text(10, 680, text=f'Value of tickets sold: ${self.data.value_tickets_sold}', font=('Arial  17'), anchor=W)
+
+        # Update refund mode buttons
+        self.confirm_button = Button(self.root, text='Refund Seats', font='Arial 20', command=lambda: self.refund_seats(), bg='red' if self.data.refund_mode else 'white')
+        self.confirm_button.place(x=10, y=240, width=270, height=40)
+
+        # Update seats
+        self.create_seats()
+        self.show_avaliable_seats()
+
+    def show_avaliable_seats(self):
+
         # Time 1
         self.canvas.create_rectangle(8, 80, 290, 100, fill='grey', outline='black')
         self.canvas.create_text(10, 90, text=f'{self.data.time_1}:', font=('Arial  15'), anchor=W)
@@ -88,39 +106,137 @@ class Window():
         self.canvas.create_text(10, 130, text=f'{self.data.time_3}:', font=('Arial  15'), anchor=W)
         self.canvas.create_text(190, 130, text=f'{self.data.available_seats_num(self.data.time_3)}/{self.data.total_seats_time_3}', font=('Arial  15'), anchor=W)
 
-        # Update cost text
-        self.canvas.create_rectangle(10, 188, 100, 212, fill='grey', outline='grey')
-        self.canvas.create_text(10, 200, text=f'${cost}', font=('Arial  20'), anchor=W)
-        # Update available seats on GUI
-
-        # Update seats
-        self.create_seats()
-
     def create_seats(self):
+        ytop = 80
+        xleft = 314
+        self.ytop = ytop
+        self.xleft = xleft
+        row_length = 20 
+        self.row_length = row_length
         # Clear previous seat selection
-        self.canvas.create_rectangle(307, 90, 1300, 700, fill='grey', outline='grey')
+        self.canvas.create_rectangle(307, 80, 1300, 750, fill='grey', outline='grey')
         # Use the data from the selected time .csv file to create the seat selection GUI
         time = self.dropdown.get()
         with open(f'{time}.csv', 'r') as file:
             lines = file.readlines()
-            
-            row_count = sum(1 for row in file)
 
-            # Generic seat selection GUI
-            xleft = 314
-            ytop = 90
             for line in lines:
                 seats = line.strip().split(',')
+                xleft = 314
                 for seat in seats:
-                    self.canvas.create_rectangle(xleft, ytop, xleft + 45, ytop + 45, fill='grey', outline='black')
+                    if seat.split(':')[1] == '0':
+                        fill_colour = 'grey40' 
+                    else:
+                        fill_colour = 'red'
+                    self.canvas.create_rectangle(xleft, ytop, xleft + 45, ytop + 45, fill=fill_colour, outline='black')
                     xleft += 49
                 ytop += 49
-                xleft = 314
+    
+    def clicked(self, event):
+        x = event.x
+        y = event.y
+
+        # Check if the click is within the seat area
+        if 314 < x < 1300 and 80 < y < 750:
+            # Get the pixel colour at the clicked position
+            clicked_pixel = self.canvas.find_closest(x, y)
+            pixel_colour = self.canvas.itemcget(clicked_pixel, 'fill')
+
+            # Calculate the row and column of the click location
+            row = (y - self.ytop) // 49
+            self.data.times[self.dropdown.get()] // self.row_length
+            if True:
+                column = (x - self.xleft) // 49
+
+            self.select_seat(row, column, pixel_colour)
+
+
+    def select_seat(self, row, column, colour):
+        # Calculate the seat number based on the row and column clicked
+        seat_number = 20*row + column + 1
+        # Makes sure you cant select a seat that doesn't exist
+        if seat_number > self.data.times[self.dropdown.get()]:
+            return
+        # Sets the location of the top left corner of the unselected seat
+        xleft = self.xleft + column*49
+        ytop = self.ytop + row*49
+
+        # If refund mode isn't active, allow the user to select seats
+        if self.data.refund_mode == False:
+            # Check if the pixel color is grey40, which indicates an available seat
+            if colour == 'grey40':
+                # Add seat to the list of selected seats
+                self.data.seats_selected.append(seat_number)
+                # Update the gui to show the selected seat
+                self.canvas.create_rectangle(xleft, ytop, xleft + 45, ytop + 45, fill='yellow', outline='black')
+                                            
+
+            # Check if the pixel color is yellow, which indicates a selected but not taken seat
+            elif colour == 'yellow':
+                # Remove seat from the list of selected seats
+                self.data.seats_selected.remove(seat_number)
+                # Changes the color of the unselected seat to grey40 to show that it's available
+                self.canvas.create_rectangle(xleft, ytop, xleft + 45, ytop + 45, fill='grey40', outline='black')
+
+        # If refund mode is active, allow the user to refund already selected seats
+        elif self.data.refund_mode == True:
+            # Check if the pixel color is red, which indicates a taken seat or black, which indicates the edge of a seat
+            if colour == 'red':
+                self.data.seats_selected.append(seat_number)
+                # Change the color of the seat to grey40 to show that it's selected
+                self.canvas.create_rectangle(xleft, ytop, xleft + 45, ytop + 45, fill='orange', outline='black')
+    
+    def refund_seats(self):
+        self.data.seats_selected = []
+        if self.data.refund_mode == False:
+            # Toggle refund mode
+            self.data.refund_mode = True
+
+            self.confirm_button.destroy()
+            self.confirm_button = Button(self.root, text='Refund Seats', font='Arial 20', command=lambda: self.refund_seats(), bg='red')
+            self.confirm_button.place(x=10, y=240, width=270, height=40)
+
+            self.refund_seats_button = Button(self.root, text='Refund Selected Seats', font='Arial 18', command=lambda: self.refund_seat_selection())
+            self.refund_seats_button.place(x=10, y=290, width=270, height=40)
+        elif self.data.refund_mode == True:
+            # Toggle refund mode
+            self.data.refund_mode = False
+            self.confirm_button.destroy()
+            self.confirm_button = Button(self.root, text='Refund Seats', font='Arial 20', command=lambda: self.refund_seats(), bg='white')
+            self.refund_seats_button.destroy()
+        self.update_day()
+
+    def refund_seat_selection(self):
+        self.refund_seats_button.destroy()
+        for seat in self.data.seats_selected:
+            # Refund the seat
+            self.data.refund_seat(self.dropdown.get(), seat)
+            # Remove the refunded seat from the tickets sold variable
+            self.data.tickets_sold -= 1
+            # Remove the cost of the refunded seat from the value of tickets sold variable
+            self.data.value_tickets_sold -= self.data.costs[self.dropdown.get()]
+        self.data.seats_selected = []
+        # Update GUI
+        self.data.refund_mode = False
+        self.update_day()
+
+    def confirm_seat_selection(self):
+        for seat in self.data.seats_selected:
+            # Sell the seat
+            self.data.sell_seat(self.dropdown.get(), seat)
+            # Add the sold seat to the tickets sold variable
+            self.data.tickets_sold += 1
+            # Add the cost of the sold seat to the value of tickets sold variable
+            self.data.value_tickets_sold += self.data.costs[self.dropdown.get()]
+        self.data.seats_selected = []
+        # Update GUI
+        self.update_day()
 
 class Data():
     def __init__(self, times, costs):
         self.times = times
         self.costs = costs
+        self.refund_mode = False
 
         self.time_1 = list(times)[0]
         self.time_2 = list(times)[1]
@@ -134,54 +250,72 @@ class Data():
         self.cost_2 = self.costs[self.time_2]
         self.cost_3 = self.costs[self.time_3]
 
-        self.seats_to_select = 0
-        self.seats_selected = 0
-
-        self.tickets_sold = 0
-        self.value_tickets_sold = 0
-
+        self.reset_day()
+        
     def reset_day(self):
+        self.seats_selected = []
         self.tickets_sold = 0
         self.value_tickets_sold = 0
-        for time in self.times:
-            with open(f'{time}.csv', 'w') as file:
-                file.write('')
-        self.time_file_create()
-
-    def time_file_create(self):
+        # Create a CSV file for each time and create the seats in it
         for time in self.times:
             with open(f'{time}.csv', 'w') as file:
                 for seat in range(1, self.times.get(time) + 1, 20):
                     row = ','.join(f'{seat + seat_index}:0' for seat_index in range(20) if seat + seat_index <= self.times.get(time))
                     file.write(f'{row}\n')
 
-    def sell_seat(self, time, seat):
+    def refund_seat(self, time, seat_to_refund):
         with open(f'{time}.csv', 'r') as file:
             lines = file.readlines()
         with open(f'{time}.csv', 'w') as file:
             for line in lines:
-                if f'{seat}:0' in line:
-                    line = line.replace(f'{seat}:0', f'{seat}:1')
-                file.write(line)
+                seats = line.strip().split(',')
+                updated_seats = []
+                for seat in seats:
+                    seat_number, status = seat.split(':')
+                    if int(seat_number) == seat_to_refund:
+                        updated_seats.append(f'{seat_number}:0')  # Update the specific seat
+                    else:
+                        updated_seats.append(f'{seat_number}:{status}')
+                file.write(','.join(updated_seats) + '\n')
 
+    def sell_seat(self, time, seat_to_sell):
+        with open(f'{time}.csv', 'r') as file:
+            lines = file.readlines()
+        with open(f'{time}.csv', 'w') as file:
+            for line in lines:
+                seats = line.strip().split(',')
+                updated_seats = []
+                for seat in seats:
+                    seat_number, status = seat.split(':')
+                    if int(seat_number) == seat_to_sell:
+                        updated_seats.append(f'{seat_number}:1')  # Update the specific seat
+                    else:
+                        updated_seats.append(f'{seat_number}:{status}')
+                file.write(','.join(updated_seats) + '\n')
+
+    # Function to return the number of seats avaliable by reading the relevant csv file
     def available_seats_num(self, time):
         with open(f'{time}.csv', 'r') as file:
             lines = file.readlines()
-        available = []
-        for line in lines:
-            seats = line.strip().split(',')
-            for seat in seats:
-                seat_number, status = seat.split(':')
-                if status == '0':
-                    available.append(int(seat_number))
+            # Creates a list for available seats
+            available = []
+            for line in lines:
+                seats = line.strip().split(',')
+                for seat in seats:
+                        seat_number, status = seat.split(':')
+                        # Check if the seat == 0 which means it is available
+                        if status == '0':
+                            # Add any avaliable seats to the list
+                            available.append(int(seat_number))
         return len(available)
 
 
 def main():
+    # Creates a dictionary of times and costs
     times = {'10am': 150, '3pm': 150, '8pm': 250}
     costs = {'10am': 5, '3pm': 5, '8pm': 12}
+
     data = Data(times, costs)
-    data.time_file_create()
     main_window = Tk()
     Window(main_window, data)
     main_window.title('Circus tickets')
@@ -189,4 +323,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
