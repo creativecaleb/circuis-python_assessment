@@ -176,19 +176,25 @@ class Window():
     
     def refund_seats(self):
         self.data.seats_selected = []
+        # If the button is pressed and the GUI isn't in refund mode, change it and show the user that it has changed
         if self.data.refund_mode == False:
             # Toggle refund mode
             self.data.refund_mode = True
 
             self.confirm_button.destroy()
+            # Changes the colour of the refund seats button to show the user that refund mode is active
             self.confirm_button = Button(self.root, text='Refund Seats', font='Arial 20', command=lambda: self.refund_seats(), bg='red')
             self.confirm_button.place(x=10, y=240, width=270, height=40)
 
+            # Adds a button to allow the user to refund the seats
             self.refund_seats_button = Button(self.root, text='Refund Selected Seats', font='Arial 18', command=lambda: self.refund_seat_selection())
             self.refund_seats_button.place(x=10, y=290, width=270, height=40)
+        
+        # If the button is pressed and the GUI is in refund mode, change it and show the user that it has changed
         elif self.data.refund_mode == True:
             # Toggle refund mode
             self.data.refund_mode = False
+            # Remove the confirm refund seats button
             self.confirm_button.destroy()
             self.confirm_button = Button(self.root, text='Refund Seats', font='Arial 20', command=lambda: self.refund_seats(), bg='white')
             self.refund_seats_button.destroy()
