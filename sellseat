@@ -1,0 +1,14 @@
+    def sell_seat(self, time, seat_to_sell):
+        with open(f'{time}.csv', 'r') as file:
+            lines = file.readlines()
+        with open(f'{time}.csv', 'w') as file:
+            for line in lines:
+                seats = line.strip().split(',')
+                updated_seats = []
+                for seat in seats:
+                    seat_number, status = seat.split(':')
+                    if int(seat_number) == seat_to_sell:
+                        updated_seats.append(f'{seat_number}:1')  # Update the specific seat
+                    else:
+                        updated_seats.append(f'{seat_number}:{status}')
+                file.write(','.join(updated_seats) + '\n')

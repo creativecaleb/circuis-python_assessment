@@ -32,7 +32,7 @@ class Window():
         self.confirm_button.place(x=10, y=240, width=270, height=40)
 
         # Day reset button
-        self.reset_button = Button(root, text='Reset Day', font='Arial 20', command=lambda: self.data.reset_day(), fg='red')
+        self.reset_button = Button(root, text='Reset Day', font='Arial 20', command=lambda: self.reset_day(), fg='red')
         self.reset_button.place(x=10, y=700, width=280, height=40)
 
         # Line to separate stage and seats from data and inputs
@@ -50,6 +50,10 @@ class Window():
     # Function to only allow numbers in the seat input box
     def only_numbers(self, char):
         return char.isdigit()
+
+    def reset_day(self):
+        self.data.reset_day()
+        self.update_day()
 
     def update_day(self):
         time = self.dropdown.get()
@@ -204,7 +208,7 @@ class Window():
         self.refund_seats_button.destroy()
         for seat in self.data.seats_selected:
             # Refund the seat
-            self.data.refund_seat(self.dropdown.get(), seat)
+            self.data.change_seat_value(self.dropdown.get(), seat)
             # Remove the refunded seat from the tickets sold variable
             self.data.tickets_sold -= 1
             # Remove the cost of the refunded seat from the value of tickets sold variable
@@ -217,7 +221,7 @@ class Window():
     def confirm_seat_selection(self):
         for seat in self.data.seats_selected:
             # Sell the seat
-            self.data.sell_seat(self.dropdown.get(), seat)
+            self.data.change_seat_value(self.dropdown.get(), seat)
             # Add the sold seat to the tickets sold variable
             self.data.tickets_sold += 1
             # Add the cost of the sold seat to the value of tickets sold variable
@@ -257,7 +261,7 @@ class Data():
                     row = ','.join(f'{seat + seat_index}:0' for seat_index in range(20) if seat + seat_index <= self.times.get(time))
                     file.write(f'{row}\n')
 
-    def refund_seat(self, time, seat_to_refund):
+    def change_seat_value(self, time, seat_to_change):
         with open(f'{time}.csv', 'r') as file:
             lines = file.readlines()
         with open(f'{time}.csv', 'w') as file:
@@ -266,23 +270,12 @@ class Data():
                 updated_seats = []
                 for seat in seats:
                     seat_number, status = seat.split(':')
-                    if int(seat_number) == seat_to_refund:
-                        updated_seats.append(f'{seat_number}:0')  # Update the specific seat
-                    else:
-                        updated_seats.append(f'{seat_number}:{status}')
-                file.write(','.join(updated_seats) + '\n')
-
-    def sell_seat(self, time, seat_to_sell):
-        with open(f'{time}.csv', 'r') as file:
-            lines = file.readlines()
-        with open(f'{time}.csv', 'w') as file:
-            for line in lines:
-                seats = line.strip().split(',')
-                updated_seats = []
-                for seat in seats:
-                    seat_number, status = seat.split(':')
-                    if int(seat_number) == seat_to_sell:
-                        updated_seats.append(f'{seat_number}:1')  # Update the specific seat
+                    if int(seat_number) == seat_to_change:
+                        if int(status) == 0:
+                            print(f'{seat_number}:1')
+                            updated_seats.append(f'{seat_number}:1')  # Update the specific seat
+                        elif int(status) == 1:
+                            updated_seats.append(f'{seat_number}:0')  # Update the specific seat
                     else:
                         updated_seats.append(f'{seat_number}:{status}')
                 file.write(','.join(updated_seats) + '\n')
