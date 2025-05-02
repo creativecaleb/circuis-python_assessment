@@ -1,7 +1,10 @@
-from tkinter import *
-from tkinter.ttk import Combobox
-from PIL import ImageGrab
-from tkinter import messagebox
+try:
+    from tkinter import *
+    from tkinter.ttk import Combobox
+    from PIL import ImageGrab
+    from tkinter import messagebox
+except:
+    print('Please install the required libraries by running install_requirements.py')
 
 class Window():
     def __init__(self, root, data):
@@ -45,7 +48,7 @@ class Window():
         canvas.create_text(800, 35, text='Stage', font=('Arial  45'))
 
         self.create_seats()
-        canvas.bind("<Button-1>", self.clicked)
+        canvas.bind('<Button-1>', self.clicked)
 
     def reset_day(self):
         self.data.reset_day()
@@ -208,12 +211,12 @@ class Window():
     
     def sell_or_refund_seat_selection(self):
         if len(self.data.seats_selected) == 0:
-            messagebox.showerror("Error", "No seats selected")
+            messagebox.showerror('Error', 'No seats selected')
             return
 
         elif len(self.data.seats_selected) > 0:
             if self.data.refund_mode == False:
-                if messagebox.askyesno("Confirm", f"Are you sure you want to sell these seats? \nThere are {len(self.data.seats_selected)} seats, with a total value of ${len(self.data.seats_selected) * self.data.costs[self.dropdown.get()]}"):
+                if messagebox.askyesno('Confirm', f'Are you sure you want to sell these seats? \nThere are {len(self.data.seats_selected)} seats, with a total value of ${len(self.data.seats_selected) * self.data.costs[self.dropdown.get()]}'):
                     for seat in self.data.seats_selected:
                         # Sell the seat
                         self.data.change_seat_value(self.dropdown.get(), seat)
@@ -224,7 +227,7 @@ class Window():
                     self.data.seats_selected = []
 
             elif self.data.refund_mode == True:
-                if messagebox.askyesno("Confirm", f"Are you sure you want to refund these seats? \nThere are {len(self.data.seats_selected)} seats, with a total value of ${len(self.data.seats_selected) * self.data.costs[self.dropdown.get()]}"):
+                if messagebox.askyesno('Confirm', f'Are you sure you want to refund these seats? \nThere are {len(self.data.seats_selected)} seats, with a total value of ${len(self.data.seats_selected) * self.data.costs[self.dropdown.get()]}'):
                     for seat in self.data.seats_selected:
                         # Refund the seat
                         self.data.change_seat_value(self.dropdown.get(), seat)
@@ -303,14 +306,18 @@ class Data():
 
 
 def main():
+    time1 = '10am'
+    time2 = '3pm'
+    time3 = '8pm'
     # Creates a dictionary of times and costs
-    times = {'10am': 150, '3pm': 150, '8pm': 250}
-    costs = {'10am': 5, '3pm': 5, '8pm': 12}
+    times = {time1: 150, time2: 150, time3: 250} # seats available for each time
+    costs = {time1: 5, time2: 5, time3: 12} # cost of tickets for each time
 
     data = Data(times, costs)
     main_window = Tk()
     Window(main_window, data)
     main_window.title('Circus tickets')
+    main_window.geometry('1300x750+3+3')
     main_window.mainloop()
 
 if __name__ == '__main__':
