@@ -29,7 +29,7 @@ class Window():
         self.refund_mode_button.place(x=10, y=190, width=270, height=40)
 
         # Button to refund seats
-        self.refund_mode_button = Button(root, text='Refund Seats', font='Arial 20', command=lambda: self.refund_mode_toggle(), bg='white')
+        self.refund_mode_button = Button(root, text='Toggle Refund Mode', font='Arial 20', command=lambda: self.refund_mode_toggle(), bg='white')
         self.refund_mode_button.place(x=10, y=240, width=270, height=40)
 
         # Day reset button
@@ -70,7 +70,7 @@ class Window():
         self.canvas.create_text(10, 680, text=f'Value of tickets sold: ${self.data.value_tickets_sold}', font=('Arial  17'), anchor=W)
 
         # Update refund mode buttons
-        self.refund_mode_button = Button(self.root, text='Refund Seats', font='Arial 20', command=lambda: self.refund_mode_toggle(), bg='red' if self.data.refund_mode else 'white')
+        self.refund_mode_button = Button(self.root, text='Toggle Refund Mode', font='Arial 20', command=lambda: self.refund_mode_toggle(), bg='red' if self.data.refund_mode else 'white')
         self.refund_mode_button.place(x=10, y=240, width=270, height=40)
         try: 
             if self.confirm_refund_button.winfo_exists():
@@ -180,6 +180,7 @@ class Window():
                 self.canvas.create_rectangle(xleft, ytop, xleft + 45, ytop + 45, fill='red', outline='black')
     
     def refund_mode_toggle(self):
+        print(self.data.refund_mode)
         self.data.seats_selected = []
         # If the button is pressed and the GUI isn't in refund mode, change it and show the user that it has changed
         if self.data.refund_mode == False:
@@ -188,7 +189,7 @@ class Window():
 
             self.refund_mode_button.destroy()
             # Changes the colour of the refund seats button to show the user that refund mode is active
-            self.refund_mode_button = Button(self.root, text='Refund Seats', font='Arial 20', command=lambda: self.refund_mode_toggle(), bg='red')
+            self.refund_mode_button = Button(self.root, text='Toggle Refund Mode', font='Arial 20', command=lambda: self.refund_mode_toggle(), bg='red')
             self.refund_mode_button.place(x=10, y=240, width=270, height=40)
 
             # Adds a button to allow the user to refund the seats
@@ -201,33 +202,40 @@ class Window():
             self.data.refund_mode = False
             # Remove the confirm refund seats button
             self.refund_mode_button.destroy()
-            self.refund_mode_button = Button(self.root, text='Refund Seats', font='Arial 20', command=lambda: self.refund_mode_toggle(), bg='white')
+            self.refund_mode_button = Button(self.root, text='Toggle Refund Mode', font='Arial 20', command=lambda: self.refund_mode_toggle(), bg='white')
             self.confirm_refund_button.destroy()
         self.create_seats()
     
     def sell_or_refund_seat_selection(self):
-        if self.data.refund_mode == False:
-            if messagebox.askyesno("Confirm", f"Are you sure you want to sell these seats? \nThere are {len(self.data.seats_selected)} seats, with a total value of ${len(self.data.seats_selected) * self.data.costs[self.dropdown.get()]}"):
-                for seat in self.data.seats_selected:
-                    # Sell the seat
-                    self.data.change_seat_value(self.dropdown.get(), seat)
-                    # Add the sold seat to the tickets sold variable
-                    self.data.tickets_sold += 1
-                    # Add the cost of the sold seat to the value of tickets sold variable
-                    self.data.value_tickets_sold += self.data.costs[self.dropdown.get()]
-                self.data.seats_selected = []
+        if len(self.data.seats_selected) == 0:
+            messagebox.showerror("Error", "No seats selected")
+            return
 
-        elif self.data.refund_mode == True:
-            if messagebox.askyesno("Confirm", f"Are you sure you want to refund these seats? \nThere are {len(self.data.seats_selected)} seats, with a total value of ${len(self.data.seats_selected) * self.data.costs[self.dropdown.get()]}"):
-                for seat in self.data.seats_selected:
-                    # Refund the seat
-                    self.data.change_seat_value(self.dropdown.get(), seat)
-                    # Remove the refunded seat from the tickets sold variable
-                    self.data.tickets_sold -= 1
-                    # Remove the cost of the refunded seat from the value of tickets sold variable
-                    self.data.value_tickets_sold -= self.data.costs[self.dropdown.get()]
-                self.data.seats_selected = []
-            # Update GUI
+        elif len(self.data.seats_selected) > 0:
+            if self.data.refund_mode == False:
+                if messagebox.askyesno("Confirm", f"Are you sure you want to sell these seats? \nThere are {len(self.data.seats_selected)} seats, with a total value of ${len(self.data.seats_selected) * self.data.costs[self.dropdown.get()]}"):
+                    for seat in self.data.seats_selected:
+                        # Sell the seat
+                        self.data.change_seat_value(self.dropdown.get(), seat)
+                        # Add the sold seat to the tickets sold variable
+                        self.data.tickets_sold += 1
+                        # Add the cost of the sold seat to the value of tickets sold variable
+                        self.data.value_tickets_sold += self.data.costs[self.dropdown.get()]
+                    self.data.seats_selected = []
+
+            elif self.data.refund_mode == True:
+                if messagebox.askyesno("Confirm", f"Are you sure you want to refund these seats? \nThere are {len(self.data.seats_selected)} seats, with a total value of ${len(self.data.seats_selected) * self.data.costs[self.dropdown.get()]}"):
+                    for seat in self.data.seats_selected:
+                        # Refund the seat
+                        self.data.change_seat_value(self.dropdown.get(), seat)
+                        # Remove the refunded seat from the tickets sold variable
+                        self.data.tickets_sold -= 1
+                        # Remove the cost of the refunded seat from the value of tickets sold variable
+                        self.data.value_tickets_sold -= self.data.costs[self.dropdown.get()]
+                    self.data.seats_selected = []
+                # Reset refund mode to false
+                self.data.refund_mode = False
+                # Update GUI
             self.update_day()
 
 
