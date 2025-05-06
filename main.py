@@ -1,7 +1,6 @@
 try:
     from tkinter import *
     from tkinter.ttk import Combobox
-    from PIL import ImageGrab
     from tkinter import messagebox
 except:
     print('Please install the required libraries by running install_requirements.py')
